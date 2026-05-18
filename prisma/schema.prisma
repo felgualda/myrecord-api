@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String    
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  records   Record[]
+
+  @@map("users")
+}
+
+model Song {
+  id          String   @id @default(uuid())
+  title       String    
+  artist      String
+  albumImage  String
+  previewUrl  String?
+  spotifyId   String?  @unique
+  createdAt   DateTime @default(now())
+
+  records   Record[]
+
+  @@map("songs")
+}
+
+model Record {
+  id           String   @id @default(uuid())
+  registeredAt DateTime @default(now())
+
+  userId       String
+  songId       String
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song         Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  //@@unique([userId, songId])
+  
+  @@map("records")
+}
