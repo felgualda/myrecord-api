@@ -3,9 +3,12 @@ import { prisma } from './lib/prisma.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-
+import cors from 'cors';
 
 const app = express();
+app.use(cors());
+app.use(express.json());
+
 const PORT = 3333;
 
 async function getSpotifyToken() {
@@ -26,8 +29,6 @@ async function getSpotifyToken() {
     const data = await response.json();
     return data.access_token;
 }
-
-app.use(express.json());
 
 app.get('/api/status', (req: Request, res: Response) => {
     res.json({
