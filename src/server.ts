@@ -4,6 +4,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import cors from 'cors';
+import { authenticateToken } from './utils/auth.js'
+import type {AuthRequest} from './utils/auth.js'
 
 const app = express();
 app.use(cors());
@@ -184,7 +186,7 @@ app.post('/api/login', async (req: Request, res: Response) => {
         }
 
         const token = jwt.sign(
-            {id : user.id, name: user.name },
+            {id : user.id, name: user.username },
             process.env['JWT_SECRET'] as string,
             { expiresIn: '7d' }
         );
@@ -198,8 +200,44 @@ app.post('/api/login', async (req: Request, res: Response) => {
     }
 });
 
-app.post('/api/records', async (req: Request, res: Response) => {
-    const { userId, spotifyId, title, artist, albumImage, previewUrl } = req.body;
+app.get('/api/records', async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit
+
+    try {
+        const records = await prisma.record.findMany({
+            take: limit,
+            skip: skip,
+            orderBy: {
+                registeredAt: 'desc'
+            },
+            include: {
+                song: true,
+                user: {
+                    select: {
+                        username: true,
+                        nickname: true
+                    }
+                }
+            }
+        });
+
+        const totalRecords = await prisma.record.count();
+        const hasMore = skip + records.length < totalRecords;
+
+        res.status(200).json({ records, hasMore }) 
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao buscar o feed.' });
+    }
+});
+
+app.post('/api/records', authenticateToken, async (req: AuthRequest, res: Response) => {
+
+    const userId = req.userId;
+
+    const {spotifyId, title, artist, albumImage, previewUrl } = req.body;
 
     if (!userId || !spotifyId || !title || !artist ) {
         return res.status(400).json({ error: 'Faltam dados obrigatórios' });
