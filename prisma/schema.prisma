@@ -41,6 +41,7 @@ model Song {
 model Record {
   id           String   @id @default(uuid())
   registeredAt DateTime @default(now())
+  comment      String   @default("")
 
   userId       String
   songId       String

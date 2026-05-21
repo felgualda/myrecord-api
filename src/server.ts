@@ -223,10 +223,33 @@ app.get('/api/records', async (req: Request, res: Response) => {
             }
         });
 
+        const formattedRecords = records.map((record) => {
+            return {
+                id: record.id, 
+                comment: record.comment,
+                
+                user: {
+                    username: record.user.username,
+                    nickname: record.user.nickname,
+                },
+
+                song: {
+                    spotifyId: record.song.spotifyId,
+                    title: record.song.title,
+                    artist: record.song.artist,
+                    albumImage: record.song.albumImage,
+                    previewUrl: record.song.previewUrl
+                }
+            }
+        });
+
         const totalRecords = await prisma.record.count();
         const hasMore = skip + records.length < totalRecords;
 
-        res.status(200).json({ records, hasMore }) 
+        return res.status(200).json({
+            records: formattedRecords,
+            hasMore: hasMore
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Erro ao buscar o feed.' });
@@ -237,7 +260,7 @@ app.post('/api/records', authenticateToken, async (req: AuthRequest, res: Respon
 
     const userId = req.userId;
 
-    const {spotifyId, title, artist, albumImage, previewUrl } = req.body;
+    const {spotifyId, title, artist, comment, albumImage, previewUrl } = req.body;
 
     if (!userId || !spotifyId || !title || !artist ) {
         return res.status(400).json({ error: 'Faltam dados obrigatórios' });
@@ -260,6 +283,7 @@ app.post('/api/records', authenticateToken, async (req: AuthRequest, res: Respon
 
         const record = await prisma.record.create({
             data: {
+                comment: comment,
                 userId: userId,
                 songId: song.id
             },
