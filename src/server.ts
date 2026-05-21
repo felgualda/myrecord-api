@@ -256,11 +256,20 @@ app.get('/api/records', async (req: Request, res: Response) => {
     }
 });
 
+const createRecordSchema = z.object({
+    spotifyId: z.string().min(1, "O ID da música é obrigatório."),
+    title: z.string().min(1, "O título da música é obrigatório."),
+    artist: z.string().min(1, "O nome do artista da música é obrigatório."),
+    comment: z.string().max(150, "O comentário não pode exceder 150 caracteres."),
+    albumImage: z.string().nullable(),
+    previewUrl: z.string().nullable()
+});
+
 app.post('/api/records', authenticateToken, async (req: AuthRequest, res: Response) => {
 
     const userId = req.userId;
 
-    const {spotifyId, title, artist, comment, albumImage, previewUrl } = req.body;
+    const {spotifyId, title, artist, comment, albumImage, previewUrl } = createRecordSchema.parse(req.body);
 
     if (!userId || !spotifyId || !title || !artist ) {
         return res.status(400).json({ error: 'Faltam dados obrigatórios' });
