@@ -16,10 +16,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = 3333;
-
-
-
 app.get('/api/status', (req: Request, res: Response) => {
     res.json({
         status: 'online',
@@ -32,6 +28,4 @@ app.use('/api/users', userRoutes);
 app.use('/api/spotify', spotifyRoutes);
 app.use('/api/records', recordRoutes);
 
-app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta http://localhost:${PORT}`);
-});
+export { app }

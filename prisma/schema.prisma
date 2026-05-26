@@ -22,6 +22,9 @@ model User {
 
   records   Record[]
 
+  following Follow[]  @relation("follower")
+  followers Follow[]  @relation("following")
+
   @@map("users")
 }
 
@@ -31,7 +34,7 @@ model Follow {
 
   follower    User @relation("follower", fields: [followerId], references: [id])
 
-  following    User @relation("following", fields: [followerId], references: [id])
+  following    User @relation("following", fields: [followingId], references: [id])
 
   createdAt DateTime @default(now())
 
