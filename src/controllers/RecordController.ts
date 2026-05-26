@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import type { AuthRequest } from '../utils/auth.js';
 
 const createRecordSchema = z.object({
     spotifyId: z.string().min(1, "O ID da música é obrigatório."),
@@ -70,7 +71,7 @@ export class RecordController {
         }
     }
 
-    async create(req: Request, res: Response) {
+    async create(req: AuthRequest, res: Response) {
         const userId = req.userId;
 
         const {spotifyId, title, artist, comment, albumImage, previewUrl } = createRecordSchema.parse(req.body);

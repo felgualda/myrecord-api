@@ -3,10 +3,6 @@ import { prisma } from '../lib/prisma.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import cors from 'cors';
-import { authenticateToken } from '../utils/auth.js'
-import type {AuthRequest} from '../utils/auth.js'
-
 
 const createUserSchema = z.object({
     username: z.string().min(4).regex(/^[a-z0-9_]+$/, "Username inválido."),
