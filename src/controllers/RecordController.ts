@@ -32,7 +32,8 @@ export class RecordController {
                     user: {
                         select: {
                             username: true,
-                            nickname: true
+                            nickname: true,
+                            picture: true,
                         }
                     }
                 }
@@ -46,6 +47,7 @@ export class RecordController {
                     user: {
                         username: record.user.username,
                         nickname: record.user.nickname,
+                        picture: record.user.picture,
                     },
 
                     song: {

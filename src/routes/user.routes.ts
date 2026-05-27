@@ -12,4 +12,6 @@ userRoutes.get('/:username/records', userController.getUserRecords);
 userRoutes.post('/:username/follow', authenticateToken, userController.followUser as any);
 userRoutes.post('/:username/unfollow', authenticateToken, userController.unfollowUser as any);
 
+userRoutes.patch('/updateProfile', authenticateToken, userController.updateProfile as any);
+
 export { userRoutes };

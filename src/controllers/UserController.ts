@@ -74,7 +74,8 @@ export class UserController {
                     user: {
                         select: {
                             username: true,
-                            nickname: true
+                            nickname: true,
+                            picture: true,
                         }
                     }
                 }
@@ -88,6 +89,7 @@ export class UserController {
                     user: {
                         username: record.user.username,
                         nickname: record.user.nickname,
+                        picture: record.user.picture,
                     },
 
                     song: {
@@ -215,6 +217,30 @@ export class UserController {
         } catch (error) {
             console.error(error);
             return res.status(500).json({ error: 'Erro interno ao deixar de seguir o usuário.' });
+        }
+    }
+
+    async updateProfile(req: AuthRequest, res: Response) {
+        const userId = req.userId;
+
+        const {nickname, picture} = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Usuário não autenticado.' });
+        }
+
+        try{
+            const updatedUser = await prisma.user.update({
+                where: { id: userId },
+                data: {
+                    nickname: nickname,
+                    picture: picture
+                }
+            });
+
+            return res.status(200).json(updatedUser)
+        } catch (error) {
+            return res.status(500).json({error: 'Erro ao atualizar perfil.' })
         }
     }
 

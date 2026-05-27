@@ -93,6 +93,7 @@ export class AuthController {
             res.json({
                 message: "Login bem-sucedido!",
                 username: user.username,
+                picture: user.picture,
                 token: token
             });
         } catch (error) {
