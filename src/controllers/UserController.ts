@@ -1,11 +1,14 @@
 import express, { type Request, type Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import type { AuthRequest } from '../utils/auth.js';
+import type { OptionalAuthRequest } from '../utils/optionalAuth.js';
 
 export class UserController {
 
-    async getProfile(req: Request, res: Response) {
+    async getProfile(req: OptionalAuthRequest, res: Response) {
         const { username } = req.params;
+        const currentUserId = req.userId;
+        //console.log(currentUserId)
 
         try{
             const userProfile = await prisma.user.findUnique({
@@ -22,7 +25,25 @@ export class UserController {
                 return res.status(404).json({ error: 'Usuário não encontrado.' });
             }
 
-            res.json( userProfile );
+            let isFollowing = false;
+
+            if (currentUserId && currentUserId !== userProfile.id) {
+                const followRecord = await prisma.follow.findUnique({
+                    where: {
+                        followerId_followingId: {
+                            followerId: currentUserId,
+                            followingId: userProfile.id
+                        }
+                    }
+                });
+
+                isFollowing = !!followRecord;
+            }
+
+            res.json({
+                ...userProfile,
+                isFollowing
+            });
 
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar o perfil.' });
@@ -58,6 +79,10 @@ export class UserController {
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar o perfil.' });
         }
+    }
+
+    async getFollowers(req: Request, res: Response) {
+
     }
 
     async followUser(req: AuthRequest, res: Response) {
