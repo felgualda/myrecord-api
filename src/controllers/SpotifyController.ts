@@ -59,4 +59,34 @@ export class SpotifyController {
             res.status(500).json({ error: 'Erro ao se comunicar com API do Spotify.' });
         }
     }
+
+    async songOfTheDay (req: Request, res: Response) {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const songOfTheDayRelation = await prisma.songOfTheDay.findUnique({
+            where: { 
+                date: today 
+            },
+            include: {
+                song: true
+            }
+            });
+
+            if (!songOfTheDayRelation) {
+            return res.status(404).json({ 
+                message: 'Nenhuma música do dia encontrada para a data de hoje.' 
+            });
+            }
+
+            return res.status(200).json(songOfTheDayRelation.song);
+
+        } catch (error) {
+            console.error('Erro ao buscar a música do dia:', error);
+            return res.status(500).json({ 
+            message: 'Erro interno do servidor ao buscar a música do dia.' 
+            });
+        }
+    }
 }

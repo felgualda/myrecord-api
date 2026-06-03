@@ -53,6 +53,8 @@ model Song {
 
   records   Record[]
 
+  songsOfTheDay  SongOfTheDay[]
+
   @@map("songs")
 }
 
@@ -70,4 +72,15 @@ model Record {
   //@@unique([userId, songId])
   
   @@map("records")
+}
+
+model SongOfTheDay {
+  id    String    @id @default(uuid())
+  date  DateTime  @unique
+  createdAt DateTime @default(now())
+
+  songId  String
+  song    Song    @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@map("song_of_the_day")
 }

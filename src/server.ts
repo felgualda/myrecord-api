@@ -6,6 +6,7 @@ import { z } from 'zod';
 import cors from 'cors';
 import { authenticateToken } from './utils/auth.js'
 import type {AuthRequest} from './utils/auth.js'
+import './cron.js';
 
 import { authRoutes } from './routes/auth.routes.js';
 import { userRoutes } from './routes/user.routes.js';
