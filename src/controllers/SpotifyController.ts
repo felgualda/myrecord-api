@@ -1,8 +1,5 @@
 import express, { type Request, type Response } from 'express';
 import { prisma } from '../lib/prisma.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { z } from 'zod';
 
 async function getSpotifyToken() {
     const clientId = process.env["SPOTIFY_CLIENT_ID"];
@@ -80,7 +77,15 @@ export class SpotifyController {
                 date: today 
             },
             include: {
-                song: true
+                song: {
+                    include: {
+                        artists: {
+                            orderBy: { position: 'asc' },
+                            include: { artist: true }
+                        },
+                        album: true,
+                    }
+                }
             }
             });
 
@@ -90,7 +95,23 @@ export class SpotifyController {
             });
             }
 
-            return res.status(200).json(songOfTheDayRelation.song);
+            const song = songOfTheDayRelation.song;
+
+            return res.status(200).json({
+                spotifyId: song.spotifyId,
+                title: song.title,
+                previewUrl: song.previewUrl,
+                artists: song.artists.map((sa) => ({
+                    spotifyId: sa.artist.spotifyId,
+                    name: sa.artist.name,
+                })),
+                album: song.album ? {
+                    spotifyId: song.album.spotifyId,
+                    title: song.album.title,
+                    coverImage: song.album.coverImage,
+                    releaseDate: song.album.releaseDate ? song.album.releaseDate.toISOString() : null,
+                } : null,
+            });
 
         } catch (error) {
             console.error('Erro ao buscar a música do dia:', error);
