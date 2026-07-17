@@ -45,9 +45,19 @@ export class SpotifyController {
             const tracks = data.tracks.items.map((item: any) => ({
                 spotifyId: item?.id,
                 title: item?.name,
-                artist: item?.artists?.[0]?.name,
-                albumImage: item?.album?.images?.[0]?.url || null,
                 previewUrl: item?.preview_url || null,
+
+                artists: (item?.artists ?? []).map((a: any) => ({
+                    spotifyId: a?.id || null,
+                    name: a?.name,
+                })),
+
+                album: {
+                    spotifyId: item?.album?.id || null,
+                    title: item?.album?.name || null,
+                    coverImage: item?.album?.images?.[0]?.url || null,
+                    releaseDate: item?.album?.release_date || null,
+                },
             }));
 
             res.json({

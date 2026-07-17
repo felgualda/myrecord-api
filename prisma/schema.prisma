@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,7 +12,7 @@ datasource db {
 model User {
   id        String   @id @default(uuid())
   username  String   @unique
-  nickname  String    
+  nickname  String
   email     String   @unique
   password  String
   picture   String?  @default("")
@@ -33,8 +31,7 @@ model Follow {
   followingId String
 
   follower    User @relation("follower", fields: [followerId], references: [id])
-
-  following    User @relation("following", fields: [followingId], references: [id])
+  following   User @relation("following", fields: [followingId], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -42,18 +39,62 @@ model Follow {
   @@map("follows")
 }
 
+model Artist {
+  id        String   @id @default(uuid())
+  name      String
+  spotifyId String?  @unique
+  picture   String?
+  createdAt DateTime @default(now())
+
+  songs  SongArtist[]
+  albums Album[]
+
+  @@map("artists")
+}
+
+model SongArtist {
+  songId   String
+  artistId String
+  position Int    @default(0)
+
+  song   Song   @relation(fields: [songId], references: [id], onDelete: Cascade)
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@id([songId, artistId])
+  @@map("song_artists")
+}
+
+model Album {
+  id          String    @id @default(uuid())
+  title       String
+  spotifyId   String?   @unique
+  coverImage  String?
+  releaseDate DateTime?
+  createdAt   DateTime  @default(now())
+
+  artistId String
+  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  songs Song[]
+
+  @@map("albums")
+}
+
 model Song {
-  id          String   @id @default(uuid())
-  title       String    
-  artist      String
-  albumImage  String
-  previewUrl  String?
-  spotifyId   String?  @unique
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  title      String
+  previewUrl String?
+  spotifyId  String?  @unique
+  rank       Int?
+  createdAt  DateTime @default(now())
 
-  records   Record[]
+  artists SongArtist[]
 
-  songsOfTheDay  SongOfTheDay[]
+  albumId String?
+  album   Album?  @relation(fields: [albumId], references: [id], onDelete: SetNull)
+
+  records       Record[]
+  songsOfTheDay SongOfTheDay[]
 
   @@map("songs")
 }
@@ -63,24 +104,24 @@ model Record {
   registeredAt DateTime @default(now())
   comment      String   @default("")
 
-  userId       String
-  songId       String
+  userId String
+  songId String
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  song         Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
 
   //@@unique([userId, songId])
-  
+
   @@map("records")
 }
 
 model SongOfTheDay {
-  id    String    @id @default(uuid())
-  date  DateTime  @unique
+  id        String   @id @default(uuid())
+  date      DateTime @unique
   createdAt DateTime @default(now())
 
-  songId  String
-  song    Song    @relation(fields: [songId], references: [id], onDelete: Cascade)
+  songId String
+  song   Song   @relation(fields: [songId], references: [id], onDelete: Cascade)
 
   @@map("song_of_the_day")
 }
