@@ -70,7 +70,15 @@ export class UserController {
                     registeredAt: 'desc'
                 },
                 include: {
-                    song: true,
+                    song: {
+                        include: {
+                            artists: {
+                                orderBy: { position: 'asc' },
+                                include: { artist: true }
+                            },
+                            album: true,
+                        }
+                    },
                     user: {
                         select: {
                             username: true,
@@ -95,8 +103,12 @@ export class UserController {
                     song: {
                         spotifyId: record.song.spotifyId,
                         title: record.song.title,
-                        artist: record.song.artist,
-                        albumImage: record.song.albumImage,
+                        artists: record.song.artists.map((sa) => ({
+                            name: sa.artist.name,
+                            spotifyId: sa.artist.spotifyId,
+                        })),
+                        artistNames: record.song.artists.map((sa) => sa.artist.name).join(', '),
+                        albumImage: record.song.album?.coverImage ?? null,
                         previewUrl: record.song.previewUrl
                     }
                 }

@@ -45,9 +45,19 @@ export class SpotifyController {
             const tracks = data.tracks.items.map((item: any) => ({
                 spotifyId: item?.id,
                 title: item?.name,
-                artist: item?.artists?.[0]?.name,
-                albumImage: item?.album?.images?.[0]?.url || null,
                 previewUrl: item?.preview_url || null,
+
+                artists: (item?.artists ?? []).map((a: any) => ({
+                    spotifyId: a?.id || null,
+                    name: a?.name,
+                })),
+
+                album: {
+                    spotifyId: item?.album?.id || null,
+                    title: item?.album?.name || null,
+                    coverImage: item?.album?.images?.[0]?.url || null,
+                    releaseDate: item?.album?.release_date || null,
+                },
             }));
 
             res.json({
@@ -57,6 +67,36 @@ export class SpotifyController {
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao se comunicar com API do Spotify.' });
+        }
+    }
+
+    async songOfTheDay (req: Request, res: Response) {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const songOfTheDayRelation = await prisma.songOfTheDay.findUnique({
+            where: { 
+                date: today 
+            },
+            include: {
+                song: true
+            }
+            });
+
+            if (!songOfTheDayRelation) {
+            return res.status(404).json({ 
+                message: 'Nenhuma música do dia encontrada para a data de hoje.' 
+            });
+            }
+
+            return res.status(200).json(songOfTheDayRelation.song);
+
+        } catch (error) {
+            console.error('Erro ao buscar a música do dia:', error);
+            return res.status(500).json({ 
+            message: 'Erro interno do servidor ao buscar a música do dia.' 
+            });
         }
     }
 }

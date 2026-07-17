@@ -5,5 +5,6 @@ const spotifyRoutes = Router();
 const spotifyController = new SpotifyController();
 
 spotifyRoutes.get('/search', spotifyController.search);
+spotifyRoutes.get('/sotd', spotifyController.songOfTheDay);
 
 export { spotifyRoutes };
