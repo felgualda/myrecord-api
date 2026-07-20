@@ -32,7 +32,7 @@ async function getItunesData(title: string, artist: string): Promise<{url: strin
         const term = encodeURIComponent(rawTerm).replace(/%2B/g, '+');
         
         const response = await fetch(
-            `https://itunes.apple.com/search?term=${term}&country=BR&media=music&entity=song&limit=3`
+            `https://itunes.apple.com/search?term=${term}&country=BR&media=music&entity=song&limit=5&explicit=Yes`
         );
 
         if (!response.ok) return { url: null, previewUrl: null };
@@ -44,12 +44,45 @@ async function getItunesData(title: string, artist: string): Promise<{url: strin
         }
 
         const lowerSearchTitle = title.toLowerCase();
+        
+        const primaryArtist = artist.split(/[,&]/)[0].trim().toLowerCase();
 
-        let track = data.results.find((t: any) => t.trackName.toLowerCase() === lowerSearchTitle);
+        let validTracks = data.results.filter((t: any) => 
+            t.artistName.toLowerCase().includes(primaryArtist)
+        );
 
-        if (!track) {
-            track = data.results[0];
+        if (validTracks.length === 0) {
+            validTracks = data.results;
         }
+
+        // ordena baseado em proximidade da string
+        validTracks.sort((a: any, b: any) => {
+            const aName = a.trackName.toLowerCase();
+            const bName = b.trackName.toLowerCase();
+
+            // match exato de nome
+            const aExact = aName === lowerSearchTitle;
+            const bExact = bName === lowerSearchTitle;
+            if (aExact && !bExact) return -1;
+            if (!aExact && bExact) return 1;
+
+            // se contem nome
+            const aIncludes = aName.includes(lowerSearchTitle);
+            const bIncludes = bName.includes(lowerSearchTitle);
+            if (aIncludes && !bIncludes) return -1;
+            if (!aIncludes && bIncludes) return 1;
+
+            if (aIncludes && bIncludes) {
+                return a.trackName.length - b.trackName.length;
+            }
+
+            return 0
+        });
+
+        const track = validTracks[0];
+
+        //debug
+        console.log("Selecionado:", track?.trackName, track?.artistName);
         
         return {
             url: track?.trackViewUrl ?? null,
