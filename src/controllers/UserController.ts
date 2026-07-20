@@ -10,14 +10,20 @@ export class UserController {
         const currentUserId = req.userId;
         //console.log(currentUserId)
 
-        try{
+        try {
             const userProfile = await prisma.user.findUnique({
                 where: { username },
                 select: {
                     id: true,
                     nickname: true,
                     picture: true,
-                    createdAt: true
+                    createdAt: true,
+
+                    _count: {
+                        select: {
+                            records: true
+                        }
+                    }
                 }
             });
 
@@ -38,14 +44,43 @@ export class UserController {
                 });
 
                 isFollowing = !!followRecord;
+            } 
+
+            const userRecords = await prisma.record.findMany({
+                where: { userId: userProfile.id },
+                select: {
+                    song: {
+                        select: { rank: true }
+                    }
+                }
+            });
+
+            let totalRank = 0;
+            let validRanksCount = 0;
+
+            for (const record of userRecords) {
+                if (record.song.rank !== null) {
+                    totalRank += record.song.rank;
+                    validRanksCount++;
+                }
             }
 
+            const averageRank = validRanksCount > 0 
+                ? Number((totalRank / validRanksCount).toFixed(2)) 
+                : null;
+
             res.json({
-                ...userProfile,
+                id: userProfile.id,
+                nickname: userProfile.nickname,
+                picture: userProfile.picture,
+                createdAt: userProfile.createdAt,
+                recordsCount: userProfile._count.records,
+                averageRank,
                 isFollowing
             });
 
         } catch (error) {
+            console.error(error);
             res.status(500).json({ error: 'Erro ao buscar o perfil.' });
         }
     }
