@@ -88,6 +88,9 @@ model Song {
   rank       Int?
   createdAt  DateTime @default(now())
 
+  deezerUrl   String?
+  iTunesUrl   String?
+
   artists SongArtist[]
 
   albumId String?

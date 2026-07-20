@@ -1,46 +1,63 @@
 // src/services/musicEnrichment.ts
 
 interface EnrichmentData {
-    rank: number | null;
-    previewUrl: string | null;
+    deezerUrl: string | null;
+    deezerRank: number | null;
+    itunesUrl: string | null;
+    itunesPreviewUrl: string | null;
 }
 
-async function getDeezerRank(title: string, artist: string): Promise<number | null> {
+async function getDeezerData(title: string, artist: string): Promise<{url: string | null; rank: number | null}> {
     try {
         const query = encodeURIComponent(`artist:"${artist}" track:"${title}"`);
         const response = await fetch(`https://api.deezer.com/search?q=${query}&limit=1`);
 
-        if (!response.ok) return null;
+        if (!response.ok) return { rank: null, url: null };
 
         const data = await response.json();
-        return data?.data?.[0]?.rank ?? null;
+        const track = data?.data?.[0];
+
+        return {
+            url: track?.link ?? null,
+            rank: track?.rank ?? null
+        };
     } catch (error) {
-        console.error('Erro ao buscar rank no Deezer:', error);
-        return null;
+        console.error('Erro ao buscar dados no Deezer:', error);
+        return { rank: null, url: null };
     }
 }
-async function getItunesPreviewUrl(title: string, artist: string): Promise<string | null> {
+async function getItunesData(title: string, artist: string): Promise<{url: string | null; previewUrl: string | null}> {
     try {
         const term = encodeURIComponent(`${artist} ${title}`);
         const response = await fetch(
             `https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=1`
         );
 
-        if (!response.ok) return null;
+        if (!response.ok) return {url: null, previewUrl: null};
 
         const data = await response.json();
-        return data?.results?.[0]?.previewUrl ?? null;
+        const track = data?.results?.[0];
+        
+        return {
+            url: track?.trackViewUrl ?? null,
+            previewUrl: track?.previewUrl ?? null
+        }
     } catch (error) {
         console.error('Erro ao buscar preview no iTunes:', error);
-        return null;
+        return {url: null, previewUrl: null};
     }
 }
 
 export async function enrichSongData(title: string, artist: string): Promise<EnrichmentData> {
-    const [rank, previewUrl] = await Promise.all([
-        getDeezerRank(title, artist),
-        getItunesPreviewUrl(title, artist)
+    const [deezerData, itunesData] = await Promise.all([
+        getDeezerData(title, artist),
+        getItunesData(title, artist)
     ]);
 
-    return { rank, previewUrl };
+    return { 
+            deezerUrl: deezerData.url, 
+            deezerRank: deezerData.rank,
+            itunesUrl: itunesData.url,
+            itunesPreviewUrl: itunesData.previewUrl
+        };
 }

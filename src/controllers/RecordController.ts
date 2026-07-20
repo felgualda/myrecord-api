@@ -14,7 +14,6 @@ const createRecordSchema = z.object({
     spotifyId: z.string().min(1, "O ID da música é obrigatório."),
     title: z.string().min(1, "O título da música é obrigatório."),
     comment: z.string().max(150, "O comentário não pode exceder 150 caracteres."),
-    previewUrl: z.string().nullable(),
 
     artists: z.array(artistSchema).min(1, "A música precisa de pelo menos um artista."),
 
@@ -34,7 +33,7 @@ export class RecordController {
             return res.status(401).json({ error: 'Usuário não autenticado.' });
         }
 
-        const { spotifyId, title, comment, previewUrl, artists, album } =
+        const { spotifyId, title, comment, artists, album } =
             createRecordSchema.parse(req.body);
 
         try {
@@ -79,9 +78,11 @@ export class RecordController {
                     data: {
                         title,
                         spotifyId,
-                        previewUrl: previewUrl || enrichment.previewUrl,
-                        rank: enrichment.rank,
+                        previewUrl: enrichment.itunesPreviewUrl,
+                        rank: enrichment.deezerRank,
                         albumId: albumRecord?.id ?? null,
+                        deezerUrl: enrichment.deezerUrl,
+                        iTunesUrl: enrichment.itunesUrl,
 
                         artists: {
                             create: artistRecords.map((artist, index) => ({
@@ -168,15 +169,17 @@ export class RecordController {
                 song: {
                     spotifyId: record.song.spotifyId,
                     title: record.song.title,
-                    // Lista de artistas na ordem correta
+                    
                     artists: record.song.artists.map((sa) => ({
                         name: sa.artist.name,
                         spotifyId: sa.artist.spotifyId,
                     })),
-                    // String pronta pra exibição: "Artista A, Artista B"
+                    
                     artistNames: record.song.artists.map((sa) => sa.artist.name).join(', '),
                     albumImage: record.song.album?.coverImage ?? null,
-                    previewUrl: record.song.previewUrl
+                    previewUrl: record.song.previewUrl,
+                    deezerUrl: record.song.deezerUrl,
+                    itunesUrl: record.song.iTunesUrl
                 }
             }));
 
