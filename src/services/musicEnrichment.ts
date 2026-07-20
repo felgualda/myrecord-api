@@ -28,23 +28,36 @@ async function getDeezerData(title: string, artist: string): Promise<{url: strin
 }
 async function getItunesData(title: string, artist: string): Promise<{url: string | null; previewUrl: string | null}> {
     try {
-        const term = encodeURIComponent(`${artist} ${title}`);
+        const rawTerm = `${title} ${artist}`.trim().replace(/\s+/g, '+');
+        const term = encodeURIComponent(rawTerm).replace(/%2B/g, '+');
+        
         const response = await fetch(
-            `https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=1`
+            `https://itunes.apple.com/search?term=${term}&country=BR&media=music&entity=song&limit=3`
         );
 
-        if (!response.ok) return {url: null, previewUrl: null};
+        if (!response.ok) return { url: null, previewUrl: null };
 
         const data = await response.json();
-        const track = data?.results?.[0];
+        
+        if (!data.results || data.results.length === 0) {
+            return { url: null, previewUrl: null };
+        }
+
+        const lowerSearchTitle = title.toLowerCase();
+
+        let track = data.results.find((t: any) => t.trackName.toLowerCase() === lowerSearchTitle);
+
+        if (!track) {
+            track = data.results[0];
+        }
         
         return {
             url: track?.trackViewUrl ?? null,
             previewUrl: track?.previewUrl ?? null
-        }
+        };
     } catch (error) {
-        console.error('Erro ao buscar preview no iTunes:', error);
-        return {url: null, previewUrl: null};
+        console.error('Erro ao buscar dados no iTunes:', error);
+        return { url: null, previewUrl: null };
     }
 }
 
