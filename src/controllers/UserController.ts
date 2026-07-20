@@ -144,7 +144,9 @@ export class UserController {
                         })),
                         artistNames: record.song.artists.map((sa) => sa.artist.name).join(', '),
                         albumImage: record.song.album?.coverImage ?? null,
-                        previewUrl: record.song.previewUrl
+                        previewUrl: record.song.previewUrl,
+                        deezerUrl: record.song.deezerUrl,
+                        itunesUrl: record.song.iTunesUrl
                     }
                 }
             });
