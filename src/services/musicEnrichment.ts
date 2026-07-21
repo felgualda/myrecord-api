@@ -28,69 +28,39 @@ async function getDeezerData(title: string, artist: string): Promise<{url: strin
 }
 async function getItunesData(title: string, artist: string): Promise<{url: string | null; previewUrl: string | null}> {
     try {
-        const rawTerm = `${title} ${artist}`.trim().replace(/\s+/g, '+');
-        const term = encodeURIComponent(rawTerm).replace(/%2B/g, '+');
-        
+        const term = encodeURIComponent(`${artist} ${title}`);
         const response = await fetch(
-            `https://itunes.apple.com/search?term=${term}&country=BR&media=music&entity=song&limit=5&explicit=Yes`
+            `https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=15`
         );
 
-        if (!response.ok) return { url: null, previewUrl: null };
+        if (!response.ok) return {url: null, previewUrl: null};
 
         const data = await response.json();
-        
-        if (!data.results || data.results.length === 0) {
-            return { url: null, previewUrl: null };
-        }
+        const results = data?.results || [];
 
-        const lowerSearchTitle = title.toLowerCase();
-        
-        const primaryArtist = artist.split(/[,&]/)[0].trim().toLowerCase();
+        if (results.length === 0) return {url: null, previewUrl: null};
 
-        let validTracks = data.results.filter((t: any) => 
-            t.artistName.toLowerCase().includes(primaryArtist)
+        const targetTitle = title.toLowerCase();
+        const targetArtist = artist.toLowerCase();
+
+        let track = results.find((t: any) => 
+            t.trackName?.toLowerCase() === targetTitle && 
+            t.artistName?.toLowerCase() === targetArtist
         );
 
-        if (validTracks.length === 0) {
-            validTracks = data.results;
+        if (!track) {
+            track = results[0];
         }
-
-        // ordena baseado em proximidade da string
-        validTracks.sort((a: any, b: any) => {
-            const aName = a.trackName.toLowerCase();
-            const bName = b.trackName.toLowerCase();
-
-            // match exato de nome
-            const aExact = aName === lowerSearchTitle;
-            const bExact = bName === lowerSearchTitle;
-            if (aExact && !bExact) return -1;
-            if (!aExact && bExact) return 1;
-
-            // se contem nome
-            const aIncludes = aName.includes(lowerSearchTitle);
-            const bIncludes = bName.includes(lowerSearchTitle);
-            if (aIncludes && !bIncludes) return -1;
-            if (!aIncludes && bIncludes) return 1;
-
-            if (aIncludes && bIncludes) {
-                return a.trackName.length - b.trackName.length;
-            }
-
-            return 0
-        });
-
-        const track = validTracks[0];
-
-        //debug
-        console.log("Selecionado:", track?.trackName, track?.artistName);
         
+        console.log(track?.trackName, track?.artistName)
+
         return {
             url: track?.trackViewUrl ?? null,
             previewUrl: track?.previewUrl ?? null
-        };
+        }
     } catch (error) {
-        console.error('Erro ao buscar dados no iTunes:', error);
-        return { url: null, previewUrl: null };
+        console.error('Erro ao buscar preview no iTunes:', error);
+        return {url: null, previewUrl: null};
     }
 }
 
